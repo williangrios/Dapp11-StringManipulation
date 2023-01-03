@@ -1,23 +1,30 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useEffect, useState } from 'react';
+import "react-toastify/dist/ReactToastify.css";
+import './App.css';
+
+import {  useState, useEffect } from 'react';
+import { ethers } from "ethers";
+import {ToastContainer, toast} from "react-toastify";
+
 import WRHeader from 'wrcomponents/dist/WRHeader';
-import WRFooter from 'wrcomponents/dist/WRFooter';
+import WRFooter, { async } from 'wrcomponents/dist/WRFooter';
 import WRInfo from 'wrcomponents/dist/WRInfo';
 import WRContent from 'wrcomponents/dist/WRContent';
 import WRTools from 'wrcomponents/dist/WRTools';
-import { ethers } from "ethers";
-import './App.css';
-import {ToastContainer, toast} from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { _toEscapedUtf8String } from "ethers/lib/utils";
 
 function App() {
+
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState({});
+  const [provider, setProvider] = useState();
+  const [contract, setContract] = useState();
+  const [signer, setSigner] = useState();
 
   const [textLenght, setTextLenght] = useState('');
   const [text1, setText1] = useState('');
   const [text2, setText2] = useState('');
   
-  const addressContract = '0x2D73005824f33DA1EE3EcdF9226b9B0C4941F2B8';
+  const contractAddress = '0x80793f9501599eA39a6df5cEDeEF4aB7010Cb99A';
 
   const abi = [
     {
@@ -68,12 +75,15 @@ function App() {
   ];
   
   let contractDeployed = null;
-  let contractDeployedSigner = null;
   
-  function getProvider(){
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    if (contractDeployed == null){
-      contractDeployed = new ethers.Contract(addressContract, abi, provider)
+  async function getProvider(){
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      if (contractDeployed == null){
+        contractDeployed = new ethers.Contract(contractAddress, abi, provider)
+      }
+    } catch (error) {
+      toastMessage(error.reason)
     }
   }
 
@@ -82,34 +92,38 @@ function App() {
   }
 
   async function handleLength() {
-    getProvider();
-    let length = await contractDeployed.getLength(textLenght);
-    toastMessage(`The lenght is ${length}`);
+    try {
+      getProvider();
+      let length = await contractDeployed.getLength(textLenght);
+      toastMessage(`The lenght is ${length}`);  
+    } catch (error) {
+      toastMessage(error.reason)
+    }
   }
 
   async function handleConcat() {
-    getProvider();
-    toastMessage(`The new text is ${await contractDeployed.concatenate(text1, text2)}`);
+    try {
+      getProvider();
+      toastMessage(`The new text is ${await contractDeployed.concatenate(text1, text2)}`);  
+    } catch (error) {
+      toastMessage(error.reason)
+    }
   }
- 
 
   return (
     <div className="App">
       <ToastContainer position="top-center" autoClose={5000}/>
-      <WRHeader title="String Manipulation in Blockchain" image={true} />
+      <WRHeader title="String Manipulation in Blockchain (legacy)" image={true} />
       <WRInfo chain="Goerli testnet" />
       <WRContent>
-
-      <h2>String lenght</h2>
-      <input type="text" placeholder="Type your text here" onChange={(e) => setTextLenght(e.target.value)} value={textLenght} />
-      <button onClick={handleLength}>Get length</button>
-      <hr/>
-
-      <h2>String concatenate</h2>
-      <input type="text" placeholder="Type text 1 here" onChange={(e) => setText1(e.target.value)} value={text1} />
-      <input type="text" placeholder="Type text 2 here" onChange={(e) => setText2(e.target.value)} value={text2} />
-      <button onClick={handleConcat}>Concatenate</button>
-        
+        <h2>String lenght</h2>
+        <input type="text" className="mb-1 commands" placeholder="Type your text here" onChange={(e) => setTextLenght(e.target.value)} value={textLenght} />
+        <button className="btn btn-primary  commands" onClick={handleLength}>Get length</button>
+        <hr/>
+        <h2>String concatenate</h2>
+        <input type="text" className="mb-1  commands" placeholder="Type text 1 here" onChange={(e) => setText1(e.target.value)} value={text1} />
+        <input type="text" className="mb-1  commands" placeholder="Type text 2 here" onChange={(e) => setText2(e.target.value)} value={text2} />
+        <button className="btn btn-primary  commands" onClick={handleConcat}>Concatenate</button>
       </WRContent>
       <WRTools react={true} truffle={true} bootstrap={true} solidity={true} css={true} javascript={true} ganache={true} ethersjs={true} />
       <WRFooter />  
